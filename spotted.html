@@ -134,15 +134,15 @@ function snrClass(db) {
 function flagUrl(ccode) {
   if (!ccode) return "";
   const up = ccode.toUpperCase();
-  let iso = PREFIX_TO_ISO[up] || PREFIX_TO_ISO[ccode];
+  if (/^[A-Z]{2}$/.test(up)) return "https://flagcdn.com/w40/" + up.toLowerCase() + ".png";
+  let iso = PREFIX_TO_ISO[up];
   if (!iso) {
     for (let i = up.length - 1; i >= 1; i--) {
       iso = PREFIX_TO_ISO[up.slice(0, i)];
       if (iso) break;
     }
   }
-  if (!iso) iso = ccode.toLowerCase();
-  if (!/^[a-z]{2}$/i.test(iso)) return "";
+  if (!iso) return "";
   return "https://flagcdn.com/w40/" + iso + ".png";
 }
 
