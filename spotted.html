@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RBN Spots</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#1a1a2e;color:#e0e0e0;min-height:100vh}
+
+.top{display:grid;grid-template-columns:80px repeat(6,auto) 1fr;align-items:center;gap:8px;padding:8px 16px;background:#1a1a2e;border-bottom:1px solid #333}
+.top .inp{grid-column:1/4;width:100%;padding:8px 12px;border:1px solid #333;border-radius:4px;background:#0d0d1a;color:#e0e0e0;font-size:16px;font-weight:700;text-transform:uppercase;outline:none;min-width:0}
+.top .inp:focus{border-color:#4caf50}
+.top .btn-search{grid-column:5/8;padding:8px 20px;border:none;border-radius:4px;background:#4caf50;color:white;font-size:16px;font-weight:700;cursor:pointer;white-space:nowrap}
+.top .btn-search:hover{background:#388e3c}
+.top .status{grid-column:8;font-size:13px;color:#888;white-space:nowrap;text-align:right;padding-left:8px}
+.top .status .live{color:#4caf50}
+
+.page-header{padding:16px 16px 12px}
+.page-header h1{font-size:18px;color:#dcdcdc;font-weight:700;margin-bottom:4px}
+.page-header p{font-size:13px;color:#888;line-height:1.6}
+
+.table-wrap{overflow-x:auto;padding:0 8px 8px}
+table{width:100%;border-collapse:collapse;font-size:14px;margin-top:4px}
+th{background:#1a1a2e;color:#9e9e9e;padding:8px 12px;text-align:left;position:sticky;top:0;white-space:nowrap;border-bottom:2px solid #4caf50;overflow:hidden;text-overflow:ellipsis}
+th.th-right{text-align:right}
+th.sortable{cursor:pointer;user-select:none}
+th.sortable:hover{color:#4caf50}
+th .sort-icon{margin-left:4px;font-size:10px;opacity:0.4}
+th.sort-active .sort-icon{opacity:1;color:#4caf50}
+td{padding:8px 12px;border-bottom:1px solid #222;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.col-spotter{min-width:140px}
+.col-qrb{min-width:90px}
+.col-freq{min-width:100px}
+.col-snr{min-width:80px}
+.col-time{min-width:80px}
+tr:hover td{background:rgba(76,175,80,0.08)}
+.spotter{color:#dcdcdc;font-weight:700}
+.freq{color:#dcdcdc;text-align:right}
+.dist{color:#dcdcdc;text-align:right}
+.snr{color:#dcdcdc;text-align:right;font-weight:700}
+.snr-strong{color:#4caf50}
+.snr-ok{color:#ffeb3b}
+.snr-weak{color:#ff9800}
+.snr-faint{color:#ff5722}
+.flag{width:20px;height:14px;vertical-align:middle;margin-right:4px;border-radius:2px}
+.time{color:#dcdcdc;text-align:right}
+.time-date{color:#666;margin-left:4px}
+.no-spots{text-align:left;padding:16px 8px;color:#888;font-size:13px}
+.no-spots a{color:#888;text-decoration:none}
+.no-spots a:hover{color:#4caf50;text-decoration:underline}
+.pulse{animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+@media(max-width:600px){
+  .top,.controls{grid-template-columns:60px repeat(6,auto) 1fr;gap:4px;padding:6px 8px}
+  .top .inp{grid-column:1/4;font-size:14px;padding:6px 8px}
+  .top .btn-search{grid-column:5/8;padding:6px 12px;font-size:14px}
+  .controls button{padding:4px 8px;font-size:12px}
+  .top .status{display:none}
+}
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <h1>Simple RBN Monitor</h1>
+  <p>
+    До 100 спотов за последний час · Обновление каждые 5 сек<br>
+    SNR: <span style="color:#4caf50">≥20 дБ</span> сильный · <span style="color:#ffeb3b">≥10 дБ</span> хороший · <span style="color:#ff9800">≥0 дБ</span> слабый · <span style="color:#ff5722">&lt;0 дБ</span> еле слышный
+  </p>
+</div>
+
+<div class="top">
+  <input class="inp" type="text" id="callsign" placeholder="Позывной" maxlength="12" spellcheck="false" autofocus>
+  <button class="btn-search" onclick="startSearch()">Поиск</button>
+  <div class="status">
+    <span class="pulse" id="live-dot" style="display:none">●</span>
+    <span id="status-text"></span>
+    <span id="spot-count"></span>
+  </div>
+</div>
+
+<div class="table-wrap">
+  <div class="no-spots" id="no-spots"><a href="mailto:andrey.R4NCU@gmail.com">andrey.R4NCU@gmail.com</a></div>
+  <table id="spots-table" style="display:none">
+    <thead>
+      <tr>
+        <th class="col-spotter">Spotter</th>
+        <th class="sortable th-right col-qrb" data-sort="dist">QRB, km <span class="sort-icon">⇅</span></th>
+        <th class="col-freq" style="text-align:right">freq</th>
+        <th class="sortable th-right col-snr" data-sort="snr">SNR, дБ <span class="sort-icon">⇅</span></th>
+        <th class="sortable th-right col-time" data-sort="time">time <span class="sort-icon">⇅</span></th>
+      </tr>
+    </thead>
+    <tbody id="spots-body"></tbody>
+  </table>
+</div>
+
+<script>
+const API = "/api/spots";
+const HASH = "7fb810";
+const REFRESH_MS = 5000;
+
+let polling = false;
+let timer = null;
+let lastId = 0;
+let spots = {};
+let callInfo = {};
+let maxAgeSec = 3600;
+let maxRows = 100;
+let sortField = null;
+let sortDir = 1;
+
+const $ = s => document.getElementById(s);
+
+function haversine(lat1, lon1, lat2, lon2) {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function snrClass(db) {
+  if (db >= 20) return "snr-strong";
+  if (db >= 10) return "snr-ok";
+  if (db >= 0) return "snr-weak";
+  return "snr-faint";
+}
+
+function flagUrl(ccode) {
+  if (!ccode) return "";
+  const up = ccode.toUpperCase();
+  let iso = PREFIX_TO_ISO[up] || PREFIX_TO_ISO[ccode];
+  if (!iso) {
+    for (let i = up.length - 1; i >= 1; i--) {
+      iso = PREFIX_TO_ISO[up.slice(0, i)];
+      if (iso) break;
+    }
+  }
+  if (!iso) iso = ccode.toLowerCase();
+  if (!/^[a-z]{2}$/i.test(iso)) return "";
+  return "https://flagcdn.com/w40/" + iso + ".png";
+}
+
+const PREFIX_TO_ISO = {
+  "G":"gb","M":"gb","Z":"gb","2E":"gb","2J":"gb","2A":"gb","2B":"gb","2C":"gb","M6":"gb","M7":"gb",
+  "england":"gb","scotland":"gb","wales":"gb","northern ireland":"gb","UK":"gb","England":"gb","Scotland":"gb",
+  "mdi":"md","Moldova":"md","Republic of Moldova":"md",
+  "K":"us","N":"us","W":"us","AA":"us","AB":"us","AC":"us","AD":"us","AE":"us","AF":"us","AG":"us",
+  "AI":"us","AJ":"us","AK":"us","AL":"us","KB":"us","KC":"us","KD":"us","KE":"us","KF":"us","KG":"us",
+  "KI":"us","KJ":"us","KK":"us","KL":"us","KM":"us","KN":"us","KO":"us","KP":"us","KQ":"us","KR":"us",
+  "KS":"us","KT":"us","KU":"us","KV":"us","KW":"us","KX":"us","KY":"us","KZ":"us","WA":"us","WB":"us",
+  "WC":"us","WD":"us","WE":"us","WF":"us","WG":"us","WH":"us","WI":"us","WJ":"us","WK":"us","WL":"us",
+  "WM":"us","WN":"us","WO":"us","WP":"us","WQ":"us","WR":"us","WS":"us","WT":"us","WU":"us","WV":"us",
+  "WW":"us","WX":"us","WY":"us","WZ":"us","NA":"us","NB":"us","NC":"us","ND":"us","NE":"us","NF":"us",
+  "NG":"us","NH":"us","NI":"us","NJ":"us","NK":"us","NL":"us","NM":"us","NN":"us","NO":"us","NP":"us",
+  "NQ":"us","NR":"us","NS":"us","NT":"us","NU":"us","NV":"us","NW":"us","NX":"us","NY":"us","NZ":"us",
+  "UA":"ru","UA2":"ru","UA3":"ru","UA4":"ru","UA6":"ru","UA9":"ru","RA":"ru","RB":"ru","RC":"ru",
+  "RD":"ru","RE":"ru","RG":"ru","RH":"ru","RI":"ru","RJ":"ru","RK":"ru","RL":"ru","RM":"ru","RN":"ru",
+  "RO":"ru","RP":"ru","RQ":"ru","RR":"ru","RS":"ru","RU":"ru","RV":"ru","RW":"ru","RX":"ru","RY":"ru",
+  "RZ":"ru","UA1":"ru","UA3A":"ru",
+  "B":"cn","BV":"cn","BY":"cn","BA":"cn","BD":"cn","BH":"cn","BI":"cn","BJ":"cn","BL":"cn","BM":"cn",
+  "BN":"cn","BP":"cn","BQ":"cn","BR":"cn","BS":"cn","BT":"cn","BU":"cn","BV0":"cn","BW":"cn","BX":"cn",
+  "JA":"jp","JE":"jp","JF":"jp","JG":"jp","JH":"jp","JI":"jp","JJ":"jp","JK":"jp","JL":"jp","JM":"jp",
+  "JN":"jp","JO":"jp","JP":"jp","JQ":"jp","JR":"jp","JS":"jp","7J":"jp","7K":"jp","8J":"jp","8K":"jp",
+  "DA":"de","DB":"de","DC":"de","DD":"de","DE":"de","DF":"de","DG":"de","DH":"de","DI":"de","DJ":"de",
+  "DK":"de","DL":"de","DM":"de","DN":"de","DO":"de","DP":"de","DQ":"de","DR":"de","DS":"de","DT":"de",
+  "DU":"de","DV":"de","DW":"de","DX":"de","DY":"de","DZ":"de",
+  "EA":"es","EB":"es","EC":"es","ED":"es","EE":"es","EF":"es","EG":"es","EH":"es",
+  "F":"fr","TK":"fr",
+  "I":"it",
+  "ON":"be","OO":"be","OP":"be","OQ":"be","OR":"be","OS":"be","OT":"be",
+  "OE":"at",
+  "PA":"nl","PB":"nl","PD":"nl","PE":"nl","PH":"nl","PI":"nl","PJ":"nl","PK":"nl","PL":"nl","PN":"nl",
+  "PP":"pt","PQ":"pt","PR":"pt","PS":"pt","PU":"pt","PV":"pt","PW":"pt","PX":"pt",
+  "SE":"se","SA":"se","SB":"se","SC":"se","SD":"se","SF":"se","SG":"se","SH":"se","SI":"se","SJ":"se",
+  "SK":"se","SL":"se","SM":"se","SN":"se","SO":"se","SP":"se","SQ":"se","SR":"se","SS":"se","ST":"se",
+  "SU":"se","SV":"se","SW":"se","SX":"se","SY":"se","SZ":"se",
+  "9A":"hr",
+  "LX":"lu",
+  "LY":"lt",
+  "YL":"lv",
+  "OK":"cz","OL":"cz","ON":"cz","OZ":"cz",
+  "SP":"pl","SQ":"pl","SO":"pl","SN":"pl","SO":"pl",
+  "HA":"hu","HG":"hu",
+  "ZA":"al","ZB":"al","ZC":"al","ZD":"al","ZF":"bs",
+  "SV":"gr","SV/A":"gr","SV5":"gr","SV9":"gr","J4":"gr","J5":"gr",
+  "4X":"il","4Z":"il",
+  "A6":"ae","A7":"qa","A8":"bh","A9":"bh",
+  "HL":"kr","6K":"kr","6L":"kr","6M":"kr","6N":"kr",
+  "VU":"in","V2":"in","V3":"in","V4":"kn","V5":"na","V6":"fm","V7":"mh","V8":"bn",
+  "YN":"ni","HO":"ni","HR":"hn",
+  "TG":"gt","TD":"hn","TE":"cr","TI":"cr","TJ":"cu","TK":"nc","TL":"cm","TN":"cg","TR":"ga","TU":"bf",
+  "TY":"bj","TZ":"ml",
+  "HC":"ec","HD":"ec","HE":"sz","HF":"ec",
+  "CX":"uy","CV":"uy",
+  "LU":"ar","LW":"ar",
+  "PY":"br","PU":"br","PP":"br","PT":"br","PW":"br","ZR":"br","ZV":"br","ZW":"br","ZX":"br","ZZ":"br",
+  "CE":"cl","CB":"cl",
+  "OA":"pe","OB":"pe","OC":"pe",
+  "YV":"ve","YR":"ro","YT":"rs","YU":"rs","YZ":"rs",
+  "EP":"ir","EQ":"ir","ERA":"ir","EKB":"ir",
+  "T":"tr","TC":"tr",
+  "4L":"ge",
+  "EJ":"ie","EI":"ie",
+  "A2":"bw","A3":"to","A5":"bt","V5":"na","C9":"mz","C8":"mz","D2":"ao","D3":"ao","D4":"cv",
+  "S5":"si","S0":"eh","S7":"sc","S8":"nr","S9":"ws","T2":"tv","T3":"ki","T5":"so","T6":"af","T7":"sm",
+  "T8":"pw","T9":"ba","V3":"bz","V4":"kn","V6":"fm","V8":"bn","XV":"kh","XW":"la","XX":"kh","XZ":"mm",
+  "Z2":"zw","Z3":"mk","Z8":"ss"
+};
+
+function formatTime(epoch) {
+  if (!epoch) return "";
+  const d = new Date(epoch * 1000);
+  const months = ["янв","фев","мар","апр","май","июн","июл","авг","сен","окт","ноя","дек"];
+  const hh = String(d.getUTCHours()).padStart(2, "0");
+  const mm = String(d.getUTCMinutes()).padStart(2, "0");
+  return hh + ":" + mm;
+}
+
+document.querySelectorAll("th.sortable").forEach(th => {
+  th.addEventListener("click", () => {
+    const field = th.dataset.sort;
+    if (sortField === field) {
+      sortDir *= -1;
+    } else {
+      sortField = field;
+      sortDir = field === "snr" ? -1 : (field === "time" ? -1 : 1);
+    }
+    document.querySelectorAll("th.sortable").forEach(t => t.classList.remove("sort-active"));
+    th.classList.add("sort-active");
+    th.querySelector(".sort-icon").textContent = sortDir === 1 ? "↑" : "↓";
+    renderSpots();
+  });
+});
+
+function startSearch() {
+  const cs = $("callsign").value.trim().toUpperCase();
+  if (!cs) return;
+  $("callsign").value = cs;
+  lastId = 0;
+  spots = {};
+  callInfo = {};
+  polling = true;
+  $("live-dot").style.display = "inline";
+  $("status-text").textContent = "Поиск: " + cs;
+  fetchSpots();
+  clearInterval(timer);
+  timer = setInterval(fetchSpots, REFRESH_MS);
+}
+
+function stopSearch() {
+  polling = false;
+  clearInterval(timer);
+  $("live-dot").style.display = "none";
+}
+
+async function fetchSpots() {
+  if (!polling) return;
+  const cs = $("callsign").value.trim().toUpperCase();
+  if (!cs) return;
+  const url = API + "?h=" + HASH + "&cdx=" + encodeURIComponent(cs) + "&r=" + maxRows + "&s=" + lastId + "&ma=" + maxAgeSec;
+
+  try {
+    const resp = await fetch(url);
+    if (!resp.ok) { $("status-text").textContent = "Ошибка: " + resp.status; return; }
+    const data = await resp.json();
+    if (data.impossible || data.error) {
+      $("no-spots").style.display = "block";
+      $("no-spots").textContent = data.impossible || data.error;
+      $("spots-table").style.display = "none";
+      return;
+    }
+
+    if (data.call_info) Object.assign(callInfo, data.call_info);
+
+    if (data.spots) {
+      const ids = Object.keys(data.spots);
+      ids.forEach(id => { spots[id] = data.spots[id]; });
+      if (ids.length > 0) lastId = Math.max(...ids.map(Number));
+    }
+
+    if (data.lastid_c) {
+      const lid = Number(data.lastid_c);
+      if (lid > lastId) lastId = lid;
+    }
+
+    renderSpots();
+  } catch (e) {
+    $("status-text").textContent = "Ошибка сети";
+  }
+}
+
+function renderSpots() {
+  const cs = $("callsign").value.trim().toUpperCase();
+  const now = Date.now() / 1000;
+
+  const targetInfo = callInfo[cs];
+  const targetLat = targetInfo ? parseFloat(targetInfo[6]) : null;
+  const targetLon = targetInfo ? parseFloat(targetInfo[7]) : null;
+
+  const filtered = Object.entries(spots)
+    .filter(([id, s]) => (now - s[10]) < maxAgeSec);
+
+  filtered.forEach(([id, s]) => {
+    const info = callInfo[s[0]] || [];
+    s._dist = (targetLat !== null && info[6]) ? haversine(targetLat, targetLon, parseFloat(info[6]), parseFloat(info[7])) : -1;
+    s._snr = Number(s[3]);
+  });
+
+  if (sortField === "dist") {
+    filtered.sort((a, b) => sortDir * (a[1]._dist - b[1]._dist));
+  } else if (sortField === "snr") {
+    filtered.sort((a, b) => sortDir * (a[1]._snr - b[1]._snr));
+  } else if (sortField === "time") {
+    filtered.sort((a, b) => sortDir * (Number(a[1][10]) - Number(b[1][10])));
+  } else {
+    filtered.sort((a, b) => Number(b[0]) - Number(a[0]));
+  }
+
+  if (filtered.length === 0) {
+    $("no-spots").style.display = "block";
+    $("no-spots").textContent = "Спотов для " + cs + " не найдено. Попробуйте позже.";
+    $("spots-table").style.display = "none";
+    $("spot-count").textContent = "";
+    return;
+  }
+
+  $("no-spots").style.display = "none";
+  $("spots-table").style.display = "table";
+
+  const tbody = $("spots-body");
+  const frag = document.createDocumentFragment();
+
+  filtered.forEach(([id, s], idx) => {
+    const [de, freq, dx, db, wpm, time, diff, band, type, mode, epoch] = s;
+    const info = callInfo[de] || [];
+    const distance = s._dist >= 0 ? s._dist.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, "\u2009") : "";
+
+    const tr = document.createElement("tr");
+    const flagHtml = info[3] ? '<img class="flag" src="' + flagUrl(info[3]) + '" loading="lazy" onerror="this.style.display=\'none\'">' : "";
+    tr.innerHTML =
+      '<td class="spotter col-spotter">' + flagHtml + de + "</td>" +
+      '<td class="dist col-qrb">' + distance + "</td>" +
+      '<td class="freq col-freq">' + freq + "</td>" +
+      '<td class="snr ' + snrClass(db) + ' col-snr">' + db + "</td>" +
+      '<td class="time col-time">' + formatTime(epoch) + "</td>";
+    frag.appendChild(tr);
+  });
+
+  tbody.innerHTML = "";
+  tbody.appendChild(frag);
+  $("spot-count").textContent = "Спотов: " + filtered.length;
+  $("status-text").textContent = "Обновлено: " + new Date().toLocaleTimeString("ru-RU");
+}
+
+$("callsign").addEventListener("keydown", e => {
+  if (e.key === "Enter") startSearch();
+  $("callsign").value = $("callsign").value.toUpperCase();
+});
+</script>
+
+</body>
+</html>
