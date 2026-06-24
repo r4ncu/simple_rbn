@@ -134,7 +134,6 @@ function snrClass(db) {
 function flagUrl(ccode) {
   if (!ccode) return "";
   const up = ccode.toUpperCase();
-  if (/^[A-Z]{2}$/.test(up)) return "https://flagcdn.com/w40/" + up.toLowerCase() + ".png";
   let iso = PREFIX_TO_ISO[up];
   if (!iso) {
     for (let i = up.length - 1; i >= 1; i--) {
@@ -348,7 +347,7 @@ function renderSpots() {
     const distance = s._dist >= 0 ? s._dist.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, "\u2009") : "";
 
     const tr = document.createElement("tr");
-    const flagHtml = info[3] ? '<img class="flag" src="' + flagUrl(info[3]) + '" loading="lazy" onerror="this.style.display=\'none\'">' : "";
+    const flagHtml = info[0] ? '<img class="flag" src="' + flagUrl(info[0]) + '" loading="lazy" onerror="this.style.display=\'none\'">' : "";
     tr.innerHTML =
       '<td class="spotter col-spotter">' + flagHtml + de + "</td>" +
       '<td class="dist col-qrb">' + distance + "</td>" +
