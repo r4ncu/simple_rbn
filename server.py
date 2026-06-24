@@ -8,7 +8,8 @@ import time
 import threading
 import urllib.parse
 
-PORT = 8080
+import os
+PORT = int(os.environ.get("PORT", 8080))
 RBN_HOST = "reversebeacon.net"
 
 ssl_ctx = ssl.create_default_context()
