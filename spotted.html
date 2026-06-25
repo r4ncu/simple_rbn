@@ -81,7 +81,7 @@ tr:hover td{background:rgba(76,175,80,0.08)}
 <body>
 
 <div class="page-header">
-  <h1>Simple RBN Monitor</h1>
+  <h1>Simple RBN Monitor <span style="opacity:0.3">by R4NCU</span></h1>
   <p>
     Споты за час. Обновление раз в 5 сек<br>
     SNR: <span style="color:#4caf50">≥20 дБ</span> · <span style="color:#ffeb3b">≥10 дБ</span> · <span style="color:#ff9800">≥0 дБ</span> · <span style="color:#ff5722">&lt;0 дБ</span>
@@ -132,6 +132,21 @@ let maxRows = 9999;
 let sortField = null;
 let sortDir = 1;
 let currentBands = "";
+
+let currentBounds = null;
+
+function applyFitBounds() {
+  if (currentBounds && map) {
+    map.invalidateSize();
+    map.fitBounds(currentBounds, {padding: [0, 0], animate: false});
+  }
+}
+
+let resizeTimer = null;
+window.addEventListener("resize", () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(applyFitBounds, 100);
+});
 
 const $ = s => document.getElementById(s);
 
@@ -298,7 +313,6 @@ function updateMap() {
 
   if (!map) initMap();
   mapLayer.clearLayers();
-  map.invalidateSize();
 
   if (tLat !== null && tLon !== null) {
     const myIcon = L.divIcon({
@@ -333,10 +347,9 @@ function updateMap() {
   });
 
   if (points.length > 0) {
-    const sz = map.getSize();
-    const px = Math.round(sz.x * 0.1);
-    const py = Math.round(sz.y * 0.1);
-    map.fitBounds(L.latLngBounds(points), {padding: [py, px]});
+    currentBounds = L.latLngBounds(points);
+    map.invalidateSize();
+    map.fitBounds(currentBounds, {padding: [0, 0], animate: false});
   }
 
   currentBands = Object.keys(bandCounts).sort().map(b =>
