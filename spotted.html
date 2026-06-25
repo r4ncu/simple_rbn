@@ -10,23 +10,23 @@
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#111111;color:#e0e0e0;min-height:100vh;max-width:860px;margin:0 auto}
 
-.top{display:flex;gap:12px;align-items:center;padding:8px 16px;background:#111111;border-bottom:1px solid #333}
+.top{display:flex;gap:12px;align-items:center;padding:8px 16px;margin:12px 0;background:#111111}
 .top .inp{flex:1;min-width:0;padding:8px 12px;border:1px solid #333;border-radius:4px;background:#111111;color:#e0e0e0;font-size:16px;font-weight:700;text-transform:uppercase;outline:none}
 .top .inp:focus{border-color:#4caf50}
 .top .btn-search{padding:8px 40px;border:none;border-radius:4px;background:#4caf50;color:white;font-size:16px;font-weight:700;cursor:pointer;white-space:nowrap}
 .top .btn-search:hover{background:#388e3c}
 .top .status{display:none}
 
-.page-header{padding:16px 16px 12px}
+.page-header{padding:16px 16px 0;margin-bottom:12px}
 .page-header h1{font-size:18px;color:#dcdcdc;font-weight:700;margin-bottom:4px}
 .page-header p{font-size:13px;color:#888;line-height:1.6}
 
-.status-bar{padding:4px 16px;font-size:13px;color:#888;display:flex;align-items:center;gap:4px}
+.status-bar{padding:0 16px;font-size:13px;color:#888;display:flex;align-items:center;gap:4px;margin:12px 0}
 .status-bar .live{color:#4caf50}
 
-.table-wrap{overflow-x:auto;padding:0 8px 8px}
+.table-wrap{overflow-x:auto;padding:0 16px 8px}
 table{width:100%;border-collapse:separate;border-spacing:0;font-size:14px;margin-top:4px}
-th{background:#111111;color:#9e9e9e;padding:8px 12px;text-align:left;position:sticky;top:0;white-space:nowrap;border-bottom:2px solid #4caf50;overflow:hidden;text-overflow:ellipsis}
+th{background:#111111;color:#9e9e9e;padding:8px 12px;text-align:left;position:sticky;top:0;white-space:nowrap;border-bottom:0.5px solid #9e9e9e;overflow:hidden;text-overflow:ellipsis}
 th.th-right{text-align:right}
 th.sortable{cursor:pointer;user-select:none}
 th.sortable:hover{color:#4caf50}
@@ -50,24 +50,21 @@ tr:hover td{background:rgba(76,175,80,0.08)}
 .flag{width:20px;height:14px;vertical-align:middle;margin-right:4px;border-radius:2px}
 .time{color:#dcdcdc;text-align:right}
 .time-date{color:#666;margin-left:4px}
-.no-spots{text-align:left;padding:16px 8px;color:#888;font-size:13px}
+.no-spots{text-align:left;padding:0;color:#888;font-size:13px}
 .no-spots a{color:#888;text-decoration:none}
 .no-spots a:hover{color:#4caf50;text-decoration:underline}
-#map-section{padding:0 8px 8px}
-#map{width:100%;height:300px;border-radius:8px;border:1px solid #333}
-.map-legend{display:flex;flex-wrap:wrap;gap:6px 12px;padding:6px 0;font-size:11px;color:#888}
-.map-legend-item{display:flex;align-items:center;gap:4px;white-space:nowrap}
-.map-legend-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+#map-section{padding:0 16px 0;margin-bottom:12px}
+#map{width:100%;height:450px;border-radius:8px;border:1px solid #333}
 .leaflet-control-attribution{font-size:9px!important}
 .leaflet-control-attribution a:first-child{display:none}
 .pulse{animation:pulse 1s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
 
 @media(max-width:600px){
-  .top{padding:8px 12px}
+  .top{padding:8px 16px}
   .top .inp{padding:8px}
   .top .btn-search{padding:8px 20px;font-size:14px}
-  #map{height:220px}
+  #map{height:330px}
   table{font-size:12px}
   th{padding:6px 6px;white-space:normal;line-height:1.3}
   td{padding:6px 6px}
@@ -85,10 +82,13 @@ tr:hover td{background:rgba(76,175,80,0.08)}
 <div class="page-header">
   <h1>Simple RBN Monitor</h1>
   <p>
-    Все споты за последний час<br>
-    Обновление каждые 5 сек<br>
+    Споты за час. Обновление раз в 5 сек<br>
     SNR: <span style="color:#4caf50">≥20 дБ</span> · <span style="color:#ffeb3b">≥10 дБ</span> · <span style="color:#ff9800">≥0 дБ</span> · <span style="color:#ff5722">&lt;0 дБ</span>
   </p>
+</div>
+
+<div id="map-section">
+  <div id="map"></div>
 </div>
 
 <div class="top">
@@ -96,15 +96,8 @@ tr:hover td{background:rgba(76,175,80,0.08)}
   <button class="btn-search" onclick="startSearch()">Поиск</button>
 </div>
 
-<div id="map-section">
-  <div class="map-legend" id="map-legend"></div>
-  <div id="map"></div>
-</div>
-
 <div class="status-bar">
-  <span class="pulse live" id="live-dot" style="display:none">●</span>
   <span id="status-text"></span>
-  <span id="spot-count"></span>
 </div>
 
 <div class="table-wrap">
@@ -137,6 +130,7 @@ let maxAgeSec = 3600;
 let maxRows = 9999;
 let sortField = null;
 let sortDir = 1;
+let currentBands = "";
 
 const $ = s => document.getElementById(s);
 
@@ -270,7 +264,7 @@ function freqToBand(freqKhz) {
 
 function initMap() {
   if (map) { map.remove(); map = null; }
-  map = L.map("map", {preferCanvas: true, zoomControl: true}).setView([40, 0], 2);
+  map = L.map("map", {preferCanvas: true, zoomControl: true}).setView([58.33, 49.75], 3);
   L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
     attribution: "&copy; OSM &copy; CARTO",
     maxZoom: 18
@@ -338,17 +332,15 @@ function updateMap() {
   });
 
   if (points.length > 0) {
-    map.fitBounds(L.latLngBounds(points), {padding: [30, 30], maxZoom: 10});
+    const sz = map.getSize();
+    const px = Math.round(sz.x * 0.1);
+    const py = Math.round(sz.y * 0.1);
+    map.fitBounds(L.latLngBounds(points), {padding: [py, px]});
   }
 
-  const legend = $("map-legend");
-  legend.innerHTML = "";
-  Object.keys(bandCounts).sort().forEach(band => {
-    const d = document.createElement("span");
-    d.className = "map-legend-item";
-    d.innerHTML = '<span class="map-legend-dot" style="background:' + (BAND_COLORS[band] || "#888") + '"></span>' + band;
-    legend.appendChild(d);
-  });
+  currentBands = Object.keys(bandCounts).sort().map(b =>
+    '<span style="color:' + (BAND_COLORS[b] || "#888") + '">&#9679;</span> ' + b
+  ).join("  ") || "";
 }
 
 function formatTime(epoch) {
@@ -384,7 +376,6 @@ function startSearch() {
   spots = {};
   callInfo = {};
   polling = true;
-  $("live-dot").style.display = "inline";
   $("status-text").textContent = "Поиск: " + cs;
   fetchSpots();
   clearInterval(timer);
@@ -394,7 +385,6 @@ function startSearch() {
 function stopSearch() {
   polling = false;
   clearInterval(timer);
-  $("live-dot").style.display = "none";
 }
 
 async function fetchSpots() {
@@ -464,7 +454,7 @@ function renderSpots() {
     $("no-spots").style.display = "block";
     $("no-spots").textContent = "Спотов для " + cs + " не найдено. Попробуйте позже.";
     $("spots-table").style.display = "none";
-    $("spot-count").textContent = "";
+    $("status-text").textContent = "";
     return;
   }
 
@@ -492,9 +482,8 @@ function renderSpots() {
 
   tbody.innerHTML = "";
   tbody.appendChild(frag);
-  $("spot-count").textContent = "Спотов: " + filtered.length;
-  $("status-text").textContent = "Обновлено: " + new Date().toLocaleTimeString("ru-RU");
   updateMap();
+  $("status-text").innerHTML = (currentBands ? currentBands + " | " : "") + "Обновлено: " + new Date().toLocaleTimeString("ru-RU") + " Спотов: " + filtered.length;
 }
 
 $("callsign").addEventListener("keydown", e => {
