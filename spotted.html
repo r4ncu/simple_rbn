@@ -8,10 +8,10 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#1a1a2e;color:#e0e0e0;min-height:100vh;max-width:860px;margin:0 auto}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#111111;color:#e0e0e0;min-height:100vh;max-width:860px;margin:0 auto}
 
-.top{display:flex;gap:12px;align-items:center;padding:8px 16px;background:#1a1a2e;border-bottom:1px solid #333}
-.top .inp{flex:1;min-width:0;padding:8px 12px;border:1px solid #333;border-radius:4px;background:#0d0d1a;color:#e0e0e0;font-size:16px;font-weight:700;text-transform:uppercase;outline:none}
+.top{display:flex;gap:12px;align-items:center;padding:8px 16px;background:#111111;border-bottom:1px solid #333}
+.top .inp{flex:1;min-width:0;padding:8px 12px;border:1px solid #333;border-radius:4px;background:#111111;color:#e0e0e0;font-size:16px;font-weight:700;text-transform:uppercase;outline:none}
 .top .inp:focus{border-color:#4caf50}
 .top .btn-search{padding:8px 40px;border:none;border-radius:4px;background:#4caf50;color:white;font-size:16px;font-weight:700;cursor:pointer;white-space:nowrap}
 .top .btn-search:hover{background:#388e3c}
@@ -26,14 +26,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;b
 
 .table-wrap{overflow-x:auto;padding:0 8px 8px}
 table{width:100%;border-collapse:separate;border-spacing:0;font-size:14px;margin-top:4px}
-th{background:#1a1a2e;color:#9e9e9e;padding:8px 12px;text-align:left;position:sticky;top:0;white-space:nowrap;border-bottom:2px solid #4caf50;overflow:hidden;text-overflow:ellipsis}
+th{background:#111111;color:#9e9e9e;padding:8px 12px;text-align:left;position:sticky;top:0;white-space:nowrap;border-bottom:2px solid #4caf50;overflow:hidden;text-overflow:ellipsis}
 th.th-right{text-align:right}
 th.sortable{cursor:pointer;user-select:none}
 th.sortable:hover{color:#4caf50}
 th .sort-icon{margin-left:4px;font-size:10px;opacity:0.4}
 th.sort-active .sort-icon{opacity:1;color:#4caf50}
 td{padding:8px 12px;border-bottom:1px solid #222;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.col-spotter{min-width:140px;background:#1a1a2e}
+.col-spotter{min-width:140px;background:#111111}
 .col-qrb{min-width:90px}
 .col-freq{min-width:100px}
 .col-snr{min-width:80px}
@@ -53,8 +53,7 @@ tr:hover td{background:rgba(76,175,80,0.08)}
 .no-spots{text-align:left;padding:16px 8px;color:#888;font-size:13px}
 .no-spots a{color:#888;text-decoration:none}
 .no-spots a:hover{color:#4caf50;text-decoration:underline}
-#map-section{display:none;padding:0 8px 8px}
-#map-section.active{display:block}
+#map-section{padding:0 8px 8px}
 #map{width:100%;height:300px;border-radius:8px;border:1px solid #333}
 .map-legend{display:flex;flex-wrap:wrap;gap:6px 12px;padding:6px 0;font-size:11px;color:#888}
 .map-legend-item{display:flex;align-items:center;gap:4px;white-space:nowrap}
@@ -280,9 +279,6 @@ function initMap() {
 }
 
 function updateMap() {
-  if (!map) return;
-  mapLayer.clearLayers();
-
   const cs = $("callsign").value.trim().toUpperCase();
   const targetInfo = callInfo[cs];
   const tLat = targetInfo ? parseFloat(targetInfo[6]) : null;
@@ -295,13 +291,27 @@ function updateMap() {
   const points = [];
 
   if (tLat !== null && tLon !== null) {
+    points.push([tLat, tLon]);
+  }
+
+  filtered.forEach(([id, s]) => {
+    const info = callInfo[s[0]] || [];
+    const lat = parseFloat(info[6]);
+    const lon = parseFloat(info[7]);
+    if (!isNaN(lat) && !isNaN(lon)) points.push([lat, lon]);
+  });
+
+  if (!map) initMap();
+  mapLayer.clearLayers();
+  map.invalidateSize();
+
+  if (tLat !== null && tLon !== null) {
     const myIcon = L.divIcon({
       className: "",
       html: '<div style="width:12px;height:12px;background:#facc15;border:2px solid #fff;border-radius:50%;box-shadow:0 0 6px rgba(0,0,0,0.5);"></div>',
       iconSize: [12, 12], iconAnchor: [6, 6]
     });
     L.marker([tLat, tLon], {icon: myIcon, zIndexOffset: 1000}).addTo(mapLayer).bindPopup("<b>" + cs + "</b>");
-    points.push([tLat, tLon]);
   }
 
   filtered.forEach(([id, s]) => {
@@ -325,13 +335,10 @@ function updateMap() {
       iconSize: [7, 7], iconAnchor: [3.5, 3.5]
     });
     L.marker([lat, lon], {icon}).addTo(mapLayer).bindPopup("<b>" + de + "</b><br>" + freq + " kHz<br>" + band);
-    points.push([lat, lon]);
   });
 
   if (points.length > 0) {
-    $("map-section").classList.add("active");
-    const bounds = L.latLngBounds(points);
-    map.fitBounds(bounds, {padding: [30, 30], maxZoom: 10});
+    map.fitBounds(L.latLngBounds(points), {padding: [30, 30], maxZoom: 10});
   }
 
   const legend = $("map-legend");
@@ -379,8 +386,6 @@ function startSearch() {
   polling = true;
   $("live-dot").style.display = "inline";
   $("status-text").textContent = "Поиск: " + cs;
-  $("map-section").classList.remove("active");
-  initMap();
   fetchSpots();
   clearInterval(timer);
   timer = setInterval(fetchSpots, REFRESH_MS);
@@ -460,7 +465,6 @@ function renderSpots() {
     $("no-spots").textContent = "Спотов для " + cs + " не найдено. Попробуйте позже.";
     $("spots-table").style.display = "none";
     $("spot-count").textContent = "";
-    $("map-section").classList.remove("active");
     return;
   }
 
@@ -497,6 +501,8 @@ $("callsign").addEventListener("keydown", e => {
   if (e.key === "Enter") startSearch();
   $("callsign").value = $("callsign").value.toUpperCase();
 });
+
+setTimeout(() => initMap(), 100);
 </script>
 
 </body>
