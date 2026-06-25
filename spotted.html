@@ -134,11 +134,15 @@ let sortDir = 1;
 let currentBands = "";
 
 let currentBounds = null;
+let autoFit = true;
+let fittingBounds = false;
 
 function applyFitBounds() {
-  if (currentBounds && map) {
+  if (autoFit && currentBounds && map) {
+    fittingBounds = true;
     map.invalidateSize();
     map.fitBounds(currentBounds, {padding: [0, 0], animate: false});
+    fittingBounds = false;
   }
 }
 
@@ -286,6 +290,7 @@ function initMap() {
     maxZoom: 18
   }).addTo(map);
   mapLayer = L.layerGroup().addTo(map);
+  map.on("zoom movestart", () => { if (!fittingBounds) autoFit = false; });
 }
 
 function updateMap() {
@@ -348,8 +353,12 @@ function updateMap() {
 
   if (points.length > 0) {
     currentBounds = L.latLngBounds(points);
-    map.invalidateSize();
-    map.fitBounds(currentBounds, {padding: [0, 0], animate: false});
+    if (autoFit) {
+      fittingBounds = true;
+      map.invalidateSize();
+      map.fitBounds(currentBounds, {padding: [0, 0], animate: false});
+      fittingBounds = false;
+    }
   }
 
   currentBands = Object.keys(bandCounts).sort().map(b =>
@@ -390,6 +399,7 @@ function startSearch() {
   spots = {};
   callInfo = {};
   polling = true;
+  autoFit = true;
   $("status-text").textContent = "Поиск: " + cs;
   fetchSpots();
   clearInterval(timer);
