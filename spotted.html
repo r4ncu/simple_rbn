@@ -55,9 +55,18 @@ tr:hover td{background:rgba(76,175,80,0.08)}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
 
 @media(max-width:600px){
-  .top{padding:8px 16px}
+  .top{padding:8px 12px}
   .top .inp{font-size:14px;padding:8px}
-  .top .btn-search{padding:8px 24px;font-size:14px}
+  .top .btn-search{padding:8px 20px;font-size:14px}
+  table{font-size:12px}
+  th{padding:6px 6px;white-space:normal;line-height:1.3}
+  td{padding:6px 6px}
+  .col-spotter{min-width:110px}
+  .col-qrb{min-width:55px}
+  .col-freq{min-width:70px}
+  .col-snr{min-width:50px}
+  .col-time{min-width:55px}
+  .flag{width:16px;height:11px;margin-right:2px}
 }
 </style>
 </head>
@@ -89,10 +98,10 @@ tr:hover td{background:rgba(76,175,80,0.08)}
     <thead>
       <tr>
         <th class="col-spotter">Spotter</th>
-        <th class="sortable th-right col-qrb" data-sort="dist">QRB, km <span class="sort-icon">⇅</span></th>
-        <th class="sortable th-right col-snr" data-sort="snr">SNR, дБ <span class="sort-icon">⇅</span></th>
-        <th class="sortable th-right col-time" data-sort="time">time <span class="sort-icon">⇅</span></th>
-        <th class="col-freq" style="text-align:right">freq</th>
+        <th class="sortable th-right col-qrb" data-sort="dist">QRB,<br>km <span class="sort-icon">⇅</span></th>
+        <th class="sortable th-right col-snr" data-sort="snr">SNR,<br>дБ <span class="sort-icon">⇅</span></th>
+        <th class="sortable th-right col-time" data-sort="time">Time<br>&nbsp;<span class="sort-icon">⇅</span></th>
+        <th class="col-freq" style="text-align:right">Freq</th>
       </tr>
     </thead>
     <tbody id="spots-body"></tbody>
