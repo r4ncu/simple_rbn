@@ -136,6 +136,9 @@ let currentBands = "";
 let currentBounds = null;
 let autoFit = true;
 let fittingBounds = false;
+let openPopup = null;
+let updatingLayers = false;
+let currentPopupMarker = null;
 
 function applyFitBounds() {
   if (autoFit && currentBounds && map) {
@@ -291,6 +294,8 @@ function initMap() {
   }).addTo(map);
   mapLayer = L.layerGroup().addTo(map);
   map.on("zoom movestart", () => { if (!fittingBounds) autoFit = false; });
+  map.on("popupopen", (e) => { currentPopupMarker = e.popup._source; });
+  map.on("popupclose", () => { if (!fittingBounds && !updatingLayers) { openPopup = null; currentPopupMarker = null; } });
 }
 
 function updateMap() {
@@ -317,7 +322,17 @@ function updateMap() {
   });
 
   if (!map) initMap();
+
+  if (currentPopupMarker && currentPopupMarker._popup && currentPopupMarker._popup.isOpen()) {
+    const ll = currentPopupMarker.getLatLng();
+    openPopup = {lat: ll.lat, lng: ll.lng, content: currentPopupMarker._popup.getContent()};
+  } else {
+    openPopup = null;
+  }
+
+  updatingLayers = true;
   mapLayer.clearLayers();
+  updatingLayers = false;
 
   if (tLat !== null && tLon !== null) {
     const myIcon = L.divIcon({
@@ -350,6 +365,18 @@ function updateMap() {
     });
     L.marker([lat, lon], {icon}).addTo(mapLayer).bindPopup("<b>" + de + "</b><br>" + freq + " kHz<br>" + band);
   });
+
+  if (openPopup) {
+    map.eachLayer(layer => {
+      if (layer instanceof L.Marker && layer.getLatLng) {
+        const ll = layer.getLatLng();
+        if (Math.abs(ll.lat - openPopup.lat) < 0.0001 && Math.abs(ll.lng - openPopup.lng) < 0.0001) {
+          layer.setPopupContent(openPopup.content);
+          layer.openPopup();
+        }
+      }
+    });
+  }
 
   if (points.length > 0) {
     currentBounds = L.latLngBounds(points);
