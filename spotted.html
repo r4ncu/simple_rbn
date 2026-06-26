@@ -7,59 +7,75 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
+:root{--bg:#111111;--bg2:#111111;--text:#e0e0e0;--text2:#888;--text3:#666;--text4:#9e9e9e;--border:#333;--border2:#222;--accent:#4caf50;--accent-hover:#388e3c;--accent-bg:rgba(76,175,80,0.08);--link:#888}
+[data-theme="light"]{--bg:#f5f5f5;--bg2:#ffffff;--text:#222;--text2:#666;--text3:#999;--text4:#555;--border:#ddd;--border2:#e5e5e5;--accent:#388e3c;--accent-hover:#2e7d32;--accent-bg:rgba(56,142,60,0.08);--link:#555}
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#111111;color:#e0e0e0;min-height:100vh;max-width:860px;margin:0 auto}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;max-width:860px;margin:0 auto}
 
-.top{display:flex;gap:12px;align-items:center;padding:8px 16px;margin:12px 0;background:#111111}
-.top .inp{flex:1;min-width:0;padding:8px 12px;border:1px solid #333;border-radius:4px;background:#111111;color:#e0e0e0;font-size:16px;font-weight:700;text-transform:uppercase;outline:none}
-.top .inp:focus{border-color:#4caf50}
-.top .btn-search{padding:8px 40px;border:none;border-radius:4px;background:#4caf50;color:white;font-size:16px;font-weight:700;cursor:pointer;white-space:nowrap}
-.top .btn-search:hover{background:#388e3c}
+.top{display:flex;gap:12px;align-items:center;padding:8px 16px;margin:12px 0;background:var(--bg)}
+.top .inp{flex:1;min-width:0;padding:8px 12px;border:1px solid var(--border);border-radius:4px;background:var(--bg2);color:var(--text);font-size:16px;font-weight:700;text-transform:uppercase;outline:none}
+.top .inp:focus{border-color:var(--accent)}
+.top .btn-search{padding:8px 40px;border:none;border-radius:4px;background:var(--accent);color:white;font-size:16px;font-weight:700;cursor:pointer;white-space:nowrap}
+.top .btn-search:hover{background:var(--accent-hover)}
 .top .status{display:none}
 
 .page-header{padding:16px 16px 0;margin-bottom:12px}
-.page-header h1{font-size:18px;color:#dcdcdc;font-weight:700;margin-bottom:4px}
-.page-header p{font-size:13px;color:#888;line-height:1.6}
+.page-header-left{position:relative}
+.page-header-left h1{font-size:18px;color:var(--text);font-weight:700;margin-bottom:4px}
+.page-header-left p{font-size:13px;color:var(--text2);line-height:1.6}
+.page-header .theme-toggle{position:absolute;top:0;right:0}
+.theme-toggle{display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none;font-size:13px;color:var(--text2)}
+.theme-toggle input{display:none}
+.theme-toggle .slider{width:72px;height:36px;background:#1a1a2e;border-radius:18px;position:relative;transition:background .3s;border:2px solid #333}
+.theme-toggle .slider::after{content:"";position:absolute;top:3px;left:3px;width:26px;height:26px;background:#b3b3b3;border-radius:50%;transition:transform .3s,background .3s}
+.theme-toggle .slider .icon-dark{position:absolute;top:7px;right:12px;font-size:16px;line-height:1;color:#ffd700;pointer-events:none}
+.theme-toggle .slider .icon-light{position:absolute;top:50%;left:11px;transform:translateY(-50%);font-size:20px;line-height:1;color:#f59e0b;pointer-events:none;display:none}
+.theme-toggle input:checked+.slider{background:#e8e8e8;border-color:#ccc}
+.theme-toggle input:checked+.slider::after{transform:translateX(36px);background:#808080}
+.theme-toggle input:checked+.slider .icon-dark{display:none}
+.theme-toggle input:checked+.slider .icon-light{display:block}
 
-.status-bar{padding:0 16px;font-size:13px;color:#888;display:flex;align-items:center;gap:4px;margin:12px 0}
-.status-bar .live{color:#4caf50}
+.status-bar{padding:0 16px;font-size:13px;color:var(--text2);display:flex;align-items:center;gap:4px;margin:12px 0}
 
 .table-wrap{overflow-x:auto;padding:0 16px 8px}
 table{width:100%;border-collapse:separate;border-spacing:0;font-size:14px;margin-top:4px}
-th{background:#111111;color:#9e9e9e;padding:8px 12px;text-align:left;position:sticky;top:0;white-space:nowrap;border-bottom:0.5px solid #9e9e9e;overflow:hidden;text-overflow:ellipsis}
+th{background:var(--bg);color:var(--text4);padding:8px 12px;text-align:left;position:sticky;top:0;white-space:nowrap;border-bottom:0.5px solid var(--text4);overflow:hidden;text-overflow:ellipsis}
+th.col-spotter{padding-left:0}
 th.th-right{text-align:right}
 th.sortable{cursor:pointer;user-select:none}
-th.sortable:hover{color:#4caf50}
+th.sortable:hover{color:var(--accent)}
 th .sort-icon{margin-left:4px;font-size:10px;opacity:0.4}
-th.sort-active .sort-icon{opacity:1;color:#4caf50}
-td{padding:8px 12px;border-bottom:1px solid #222;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.col-spotter{min-width:140px;background:#111111}
+th.sort-active .sort-icon{opacity:1;color:var(--accent)}
+td{padding:8px 12px;border-bottom:1px solid var(--border2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.col-spotter{min-width:140px;background:var(--bg);padding-left:0!important}
 .col-qrb{min-width:90px}
-.col-freq{min-width:100px}
+.col-freq{min-width:100px;padding-right:0!important;text-align:right!important}
 .col-snr{min-width:80px}
 .col-time{min-width:80px}
-tr:hover td{background:rgba(76,175,80,0.08)}
-.spotter{color:#dcdcdc;font-weight:700}
-.freq{color:#dcdcdc;text-align:right}
-.dist{color:#dcdcdc;text-align:right}
-.snr{color:#dcdcdc;text-align:right;font-weight:700}
+tr:hover td{background:var(--accent-bg)}
+.spotter{color:var(--text);font-weight:700}
+.freq{color:var(--text);text-align:right}
+.dist{color:var(--text);text-align:right}
+.snr{color:var(--text);text-align:right;font-weight:700}
 .snr-strong{color:#4caf50}
-.snr-ok{color:#ffeb3b}
-.snr-weak{color:#ff9800}
-.snr-faint{color:#ff5722}
+.snr-ok{color:#eab308}
+.snr-weak{color:#f97316}
+.snr-faint{color:#ef4444}
 .flag{width:20px;height:14px;vertical-align:middle;margin-right:4px;border-radius:2px}
-.time{color:#dcdcdc;text-align:right}
-.time-date{color:#666;margin-left:4px}
-.no-spots{text-align:left;padding:0;color:#888;font-size:13px}
-.no-spots a{color:#888;text-decoration:none}
-.no-spots a:hover{color:#4caf50;text-decoration:underline}
+.time{color:var(--text);text-align:right}
+.time-date{color:var(--text3);margin-left:4px}
+.no-spots{text-align:left;padding:0;color:var(--text2);font-size:13px}
+.no-spots a{color:var(--link);text-decoration:none}
+.no-spots a:hover{color:var(--accent);text-decoration:underline}
 #map-section{padding:0 16px 0;margin-bottom:12px}
-#map{width:100%;height:450px;border-radius:8px;border:1px solid #333}
+#map{width:100%;height:450px;border-radius:8px;border:1px solid var(--border)}
 .leaflet-control-attribution{font-size:9px!important;opacity:0.4}
 .leaflet-control-attribution a:first-child{display:none}
 .leaflet-control-zoom a{opacity:0.4}
 .pulse{animation:pulse 1s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+@keyframes spot-highlight{0%{background:rgba(76,175,80,0.25)}100%{background:transparent}}
+tr.spot-new td{animation:spot-highlight 4s ease-out}
 
 @media(max-width:600px){
   .top{padding:8px 16px}
@@ -81,11 +97,20 @@ tr:hover td{background:rgba(76,175,80,0.08)}
 <body>
 
 <div class="page-header">
-  <h1>Simple RBN Monitor <span style="opacity:0.3">by R4NCU</span></h1>
-  <p>
-    Споты за час. Обновление раз в 5 сек<br>
-    SNR: <span style="color:#4caf50">≥20 дБ</span> · <span style="color:#ffeb3b">≥10 дБ</span> · <span style="color:#ff9800">≥0 дБ</span> · <span style="color:#ff5722">&lt;0 дБ</span>
-  </p>
+  <div class="page-header-left">
+    <h1>Simple RBN Monitor <span style="opacity:0.3">by R4NCU</span></h1>
+    <label class="theme-toggle">
+      <input type="checkbox" id="theme-switch">
+      <span class="slider">
+        <span class="icon-dark">&#9790;</span>
+        <span class="icon-light">&#9728;</span>
+      </span>
+    </label>
+    <p>
+      Споты за час. Обновление раз в 5 сек<br>
+      SNR: <span style="color:#4caf50">≥20 дБ</span> · <span style="color:#eab308">≥10 дБ</span> · <span style="color:#f97316">≥0 дБ</span> · <span style="color:#ef4444">&lt;0 дБ</span>
+    </p>
+  </div>
 </div>
 
 <div id="map-section">
@@ -102,7 +127,7 @@ tr:hover td{background:rgba(76,175,80,0.08)}
 </div>
 
 <div class="table-wrap">
-  <div class="no-spots" id="no-spots"><a href="mailto:andrey.R4NCU@gmail.com">andrey.R4NCU@gmail.com</a></div>
+  <div class="no-spots" id="no-spots">Введите позывной и нажмите «Поиск»</div>
   <table id="spots-table" style="display:none">
     <thead>
       <tr>
@@ -115,6 +140,10 @@ tr:hover td{background:rgba(76,175,80,0.08)}
     </thead>
     <tbody id="spots-body"></tbody>
   </table>
+</div>
+
+<div style="padding:0 16px 24px">
+  <a href="https://github.com/r4ncu/simple_rbn" target="_blank" style="font-size:12px;color:var(--text3);text-decoration:none">https://github.com/r4ncu/simple_rbn</a>
 </div>
 
 <script>
@@ -139,6 +168,24 @@ let fittingBounds = false;
 let openPopup = null;
 let updatingLayers = false;
 let currentPopupMarker = null;
+let knownIds = new Set();
+
+const DARK_TILES = "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png";
+const LIGHT_TILES = "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png";
+
+let tileLayer = null;
+let currentTheme = localStorage.getItem("rbn-theme") || "dark";
+
+function applyTheme(theme) {
+  currentTheme = theme;
+  document.documentElement.setAttribute("data-theme", theme);
+  $("theme-switch").checked = theme === "light";
+  localStorage.setItem("rbn-theme", theme);
+  if (tileLayer) {
+    const url = theme === "light" ? LIGHT_TILES : DARK_TILES;
+    tileLayer.setUrl(url);
+  }
+}
 
 function applyFitBounds() {
   if (autoFit && currentBounds && map) {
@@ -252,23 +299,23 @@ const PREFIX_TO_ISO = {
   "5A":"ly","5B":"cy","5C":"ma","5D":"ma","5E":"ma","5F":"ma","5G":"ma","5H":"tz","5I":"tz","5J":"co","5K":"co","5L":"lr","5M":"lr","5N":"ng","5O":"ng","5P":"dk","5Q":"dk","5R":"mg","5S":"mg","5T":"mr","5U":"ne","5V":"tg","5W":"ws","5X":"ug","5Y":"ke","5Z":"ke",
   "6A":"eg","6B":"eg","6C":"sy","6D":"mx","6E":"mx","6F":"mx","6G":"mx","6H":"mx","6I":"mx","6J":"mx","6K":"kr","6L":"kr","6M":"kr","6N":"kr","6O":"so","6P":"pk","6Q":"pk","6R":"pk","6S":"pk","6T":"sd","6U":"sd","6V":"sn","6W":"sn","6X":"mg","6Y":"jm","6Z":"lr",
   "7A":"id","7B":"id","7C":"id","7D":"id","7E":"id","7F":"id","7G":"id","7H":"id","7I":"id","7J":"jp","7K":"jp","7L":"jp","7M":"jp","7N":"jp","7O":"ye","7P":"ls","7Q":"mw","7R":"dz","7S":"se","7T":"dz","7U":"dz","7V":"dz","7W":"dz","7X":"dz","7Y":"dz","7Z":"sa",
-  "8A":"id","8B":"id","8C":"id","8D":"id","8E":"id","8F":"id","8G":"id","8H":"id","8I":"id","8J":"jp","8K":"jp","8L":"jp","8M":"jp","8N":"jp","8O":"bw","8P":"bb","8Q":"mv","8R":"gy","8S":"se","8T":"in","8U":"in","8V":"in","8W":"in","8X":"in","8Y":"in","8Z":"sa",
+  "8A":"id","8B":"id","8C":"id","8D":"id","8E":"id","8F":"id","8G":"id","8H":"id","8I":"id","8J":"jp","8K":"jp","8L":"jp","8M":"jp","8N":"jp","8O":"bw","8P":"bb","8Q":"mv","8R":"gy","8S":"se","8T":"in","8U":"in","8V":"in","8W":"in","8Y":"in","8Z":"sa",
   "9A":"hr","9B":"mu","9C":"gn","9D":"sz","9E":"et","9F":"et","9G":"gh","9H":"mt","9I":"zm","9J":"zm","9K":"kw","9L":"sl","9M":"my","9N":"np","9O":"cd","9P":"cd","9Q":"cd","9R":"cd","9S":"cd","9T":"cd","9U":"bi","9V":"sg","9W":"my","9X":"rw","9Y":"tt","9Z":"tt"
 };
 
 let map = null;
 let mapLayer = null;
-let mapLegend = null;
 
 const BAND_COLORS = {
-  "160M":"#ef4444","80M":"#f97316","60M":"#eab308","40M":"#22c55e","30M":"#14b8a6",
-  "20M":"#06b6d4","17M":"#3b82f6","15M":"#6366f1","12M":"#8b5cf6","10M":"#d946ef",
-  "6M":"#ec4899","2M":"#f43f5e","1.25M":"#fb923c","70CM":"#a855f7"
+  "630M":"#aaaaaa","160M":"#ffe000","80M":"#2e7d32","60M":"#8a5a2a","40M":"#ffa500","30M":"#ff0000",
+  "20M":"#800080","17M":"#2962ff","15M":"#4caf50","12M":"#03ffff","10M":"#ff00ff",
+  "6M":"#ffc1cb","4M":"#a276ff","2M":"#92ff7f"
 };
 
 function freqToBand(freqKhz) {
   const f = parseFloat(freqKhz);
   if (isNaN(f)) return "OTHR";
+  if (f < 500) return "630M";
   if (f < 2000) return "160M";
   if (f < 4000) return "80M";
   if (f < 5500) return "60M";
@@ -280,15 +327,16 @@ function freqToBand(freqKhz) {
   if (f < 26000) return "12M";
   if (f < 30000) return "10M";
   if (f < 54000) return "6M";
+  if (f < 80000) return "4M";
   if (f < 150000) return "2M";
-  if (f < 300000) return "1.25M";
   return "70CM";
 }
 
 function initMap() {
   if (map) { map.remove(); map = null; }
   map = L.map("map", {preferCanvas: true, zoomControl: true}).setView([58.33, 49.75], 3);
-  L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+  const url = currentTheme === "light" ? LIGHT_TILES : DARK_TILES;
+  tileLayer = L.tileLayer(url, {
     attribution: "&copy; OSM &copy; CARTO",
     maxZoom: 18
   }).addTo(map);
@@ -355,7 +403,7 @@ function updateMap() {
     bandCounts[band] = (bandCounts[band] || 0) + 1;
 
     if (tLat !== null && tLon !== null) {
-      L.polyline([[tLat, tLon], [lat, lon]], {color: color, weight: 0.7, opacity: 0.35}).addTo(mapLayer);
+      L.polyline([[tLat, tLon], [lat, lon]], {color: color, weight: 1.4, opacity: 0.35}).addTo(mapLayer);
     }
 
     const icon = L.divIcon({
@@ -422,6 +470,7 @@ function startSearch() {
   const cs = $("callsign").value.trim().toUpperCase();
   if (!cs) return;
   $("callsign").value = cs;
+  localStorage.setItem("rbn-callsign", cs);
   lastId = 0;
   spots = {};
   callInfo = {};
@@ -521,6 +570,7 @@ function renderSpots() {
     const distance = s._dist >= 0 ? s._dist.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, "\u2009") : "";
 
     const tr = document.createElement("tr");
+    if (!knownIds.has(id)) tr.classList.add("spot-new");
     const flagHtml = '<img class="flag" src="' + flagUrl(de) + '" loading="lazy" onerror="this.style.display=\'none\'">';
     tr.innerHTML =
       '<td class="spotter col-spotter">' + flagHtml + de + "</td>" +
@@ -533,6 +583,7 @@ function renderSpots() {
 
   tbody.innerHTML = "";
   tbody.appendChild(frag);
+  knownIds = new Set(filtered.map(([id]) => id));
   updateMap();
   $("status-text").innerHTML = (currentBands ? currentBands + " | " : "") + "Обновлено: " + new Date().toLocaleTimeString("ru-RU") + " Спотов: " + filtered.length;
 }
@@ -541,6 +592,18 @@ $("callsign").addEventListener("keydown", e => {
   if (e.key === "Enter") startSearch();
   $("callsign").value = $("callsign").value.toUpperCase();
 });
+
+$("theme-switch").addEventListener("change", (e) => {
+  applyTheme(e.target.checked ? "light" : "dark");
+});
+
+applyTheme(currentTheme);
+
+const savedCallsign = localStorage.getItem("rbn-callsign");
+if (savedCallsign) {
+  $("callsign").value = savedCallsign;
+  setTimeout(() => startSearch(), 200);
+}
 
 setTimeout(() => initMap(), 100);
 </script>
