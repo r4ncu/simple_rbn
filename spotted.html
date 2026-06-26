@@ -118,7 +118,7 @@ tr.spot-new td{animation:spot-highlight 4s ease-out}
 </div>
 
 <div class="top">
-  <input class="inp" type="text" id="callsign" placeholder="Позывной" maxlength="12" spellcheck="false" autofocus>
+  <input class="inp" type="text" id="callsign" placeholder="Позывной" maxlength="12" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="characters" inputmode="text" autofocus>
   <button class="btn-search" onclick="startSearch()">Поиск</button>
 </div>
 
@@ -588,9 +588,15 @@ function renderSpots() {
   $("status-text").innerHTML = (currentBands ? currentBands + " | " : "") + "Обновлено: " + new Date().toLocaleTimeString("ru-RU") + " Спотов: " + filtered.length;
 }
 
+let composing = false;
+$("callsign").addEventListener("compositionstart", () => { composing = true; });
+$("callsign").addEventListener("compositionend", () => {
+  composing = false;
+  $("callsign").value = $("callsign").value.toUpperCase();
+});
 $("callsign").addEventListener("keydown", e => {
   if (e.key === "Enter") startSearch();
-  $("callsign").value = $("callsign").value.toUpperCase();
+  if (!composing) $("callsign").value = $("callsign").value.toUpperCase();
 });
 
 $("theme-switch").addEventListener("change", (e) => {
