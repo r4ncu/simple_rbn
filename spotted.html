@@ -60,7 +60,6 @@ tr:hover td{background:var(--accent-bg)}
 .snr-strong{color:#4caf50}
 .snr-ok{color:#eab308}
 .snr-weak{color:#f97316}
-.snr-faint{color:#ef4444}
 .flag{width:20px;height:14px;vertical-align:middle;margin-right:4px;border-radius:2px}
 .time{color:var(--text);text-align:right}
 .time-date{color:var(--text3);margin-left:4px}
@@ -108,7 +107,7 @@ tr.spot-new td{animation:spot-highlight 4s ease-out}
     </label>
     <p>
       Споты за час. Обновление раз в 5 сек<br>
-      SNR: <span style="color:#4caf50">≥20 дБ</span> · <span style="color:#eab308">≥10 дБ</span> · <span style="color:#f97316">≥0 дБ</span> · <span style="color:#ef4444">&lt;0 дБ</span>
+      SNR: <span style="color:#4caf50">≥20 дБ</span> · <span style="color:#eab308">≥10 дБ</span> · <span style="color:#f97316">≥0 дБ</span>
     </p>
   </div>
 </div>
@@ -215,8 +214,7 @@ function haversine(lat1, lon1, lat2, lon2) {
 function snrClass(db) {
   if (db >= 20) return "snr-strong";
   if (db >= 10) return "snr-ok";
-  if (db >= 0) return "snr-weak";
-  return "snr-faint";
+  return "snr-weak";
 }
 
 function callsignPrefix(callsign) {
