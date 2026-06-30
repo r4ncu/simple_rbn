@@ -35,7 +35,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;b
 .theme-toggle input:checked+.slider .icon-dark{display:none}
 .theme-toggle input:checked+.slider .icon-light{display:block}
 
-.status-bar{padding:0 16px;font-size:13px;color:var(--text2);display:flex;align-items:center;gap:4px;margin:12px 0}
+.status-bar{padding:0 16px;font-size:13px;color:var(--text2);display:flex;align-items:center;gap:4px;margin:12px 0;flex-wrap:wrap}
+.band-item{cursor:pointer;user-select:none;transition:opacity .2s}
+.band-item.disabled{opacity:0.3}
 
 .table-wrap{overflow-x:auto;padding:0 16px 8px}
 table{width:100%;border-collapse:separate;border-spacing:0;font-size:14px;margin-top:4px}
@@ -160,6 +162,8 @@ let maxRows = 9999;
 let sortField = null;
 let sortDir = 1;
 let currentBands = "";
+let allBands = [];
+let disabledBands = new Set();
 
 let currentBounds = null;
 let autoFit = true;
@@ -354,6 +358,7 @@ function updateMap() {
   const filtered = Object.entries(spots).filter(([id, s]) => (now - s[10]) < maxAgeSec);
 
   const bandCounts = {};
+  const activeBands = new Set();
   const points = [];
 
   if (tLat !== null && tLon !== null) {
@@ -365,7 +370,10 @@ function updateMap() {
     const lat = parseFloat(info[6]);
     const lon = parseFloat(info[7]);
     if (!isNaN(lat) && !isNaN(lon)) points.push([lat, lon]);
+    activeBands.add(freqToBand(s[1]));
   });
+
+  allBands = [...activeBands].sort();
 
   if (!map) initMap();
 
@@ -397,6 +405,7 @@ function updateMap() {
     if (isNaN(lat) || isNaN(lon)) return;
 
     const band = freqToBand(freq);
+    if (disabledBands.has(band)) return;
     const color = BAND_COLORS[band] || "#888";
     bandCounts[band] = (bandCounts[band] || 0) + 1;
 
@@ -434,9 +443,14 @@ function updateMap() {
     }
   }
 
-  currentBands = Object.keys(bandCounts).sort().map(b =>
-    '<span style="color:' + (BAND_COLORS[b] || "#888") + '">&#9679;</span> ' + b
-  ).join("  ") || "";
+  const canDisable = allBands.length > 1;
+  currentBands = allBands.map(b => {
+    const dis = disabledBands.has(b);
+    const cls = dis ? ' disabled' : '';
+    const click = canDisable ? ' onclick="toggleBand(\'' + b + '\')"' : '';
+    const style = ' style="color:' + (dis ? 'var(--text3)' : (BAND_COLORS[b] || "#888")) + '"';
+    return '<span class="band-item' + cls + '"' + click + style + '>&#9679; ' + b + '</span>';
+  }).join("  ") || "";
 }
 
 function formatTime(epoch) {
@@ -521,6 +535,17 @@ async function fetchSpots() {
   }
 }
 
+function toggleBand(band) {
+  const activeCount = allBands.filter(b => !disabledBands.has(b)).length;
+  if (disabledBands.has(band)) {
+    disabledBands.delete(band);
+  } else {
+    if (activeCount <= 1) return;
+    disabledBands.add(band);
+  }
+  renderSpots();
+}
+
 function renderSpots() {
   const cs = $("callsign").value.trim().toUpperCase();
   const now = Date.now() / 1000;
@@ -530,7 +555,7 @@ function renderSpots() {
   const targetLon = targetInfo ? parseFloat(targetInfo[7]) : null;
 
   const filtered = Object.entries(spots)
-    .filter(([id, s]) => (now - s[10]) < maxAgeSec);
+    .filter(([id, s]) => (now - s[10]) < maxAgeSec && !disabledBands.has(freqToBand(s[1])));
 
   filtered.forEach(([id, s]) => {
     const info = callInfo[s[0]] || [];
