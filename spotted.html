@@ -607,6 +607,8 @@ function renderSpots() {
     $("no-spots").textContent = "Спотов для " + cs + " не найдено. Попробуйте позже.";
     $("spots-table").style.display = "none";
     $("status-text").textContent = "";
+    if (map && mapLayer) { updatingLayers = true; mapLayer.clearLayers(); updatingLayers = false; }
+    currentBands = "";
     return;
   }
 
