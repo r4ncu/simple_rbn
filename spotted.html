@@ -400,7 +400,7 @@ function updateMap() {
   }
 
   filtered.forEach(([id, s]) => {
-    const [de, freq] = s;
+    const [de, freq, dx, db, wpm, time, diff, band, type, mode, epoch] = s;
     const info = callInfo[de] || [];
     const lat = parseFloat(info[6]);
     const lon = parseFloat(info[7]);
@@ -420,7 +420,7 @@ function updateMap() {
       html: '<div style="width:7px;height:7px;background:' + color + ';border:1px solid rgba(255,255,255,0.3);border-radius:50%;"></div>',
       iconSize: [7, 7], iconAnchor: [3.5, 3.5]
     });
-    L.marker([lat, lon], {icon}).addTo(mapLayer).bindPopup("<b>" + de + "</b><br>" + freq + " kHz<br>" + band);
+    L.marker([lat, lon], {icon}).addTo(mapLayer).bindPopup("<b>" + de + "</b><br>" + freq + " kHz · " + band + "<br>SNR: " + db + " дБ<br>" + formatTime(epoch) + " UTC");
   });
 
   if (openPopup) {
