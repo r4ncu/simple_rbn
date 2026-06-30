@@ -486,6 +486,7 @@ function startSearch() {
   lastId = 0;
   spots = {};
   callInfo = {};
+  disabledBands = new Set();
   polling = true;
   autoFit = true;
   $("status-text").textContent = "Поиск: " + cs;
