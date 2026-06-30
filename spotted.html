@@ -225,9 +225,9 @@ function snrClass(db) {
 
 function callsignPrefix(callsign) {
   const up = callsign.toUpperCase();
-  const letters = up.replace(/[^A-Z]/g, "");
-  if (letters.length >= 2) return letters.slice(0, 2);
-  return up.replace(/[^A-Z0-9]/g, "").slice(0, 2);
+  const m = up.match(/^(\d?[A-Z]+)/);
+  if (!m) return up.replace(/[^A-Z0-9]/g, "").slice(0, 2);
+  return m[1].slice(0, 2);
 }
 
 function flagUrl(callsign) {
@@ -420,7 +420,7 @@ function updateMap() {
       html: '<div style="width:7px;height:7px;background:' + color + ';border:1px solid rgba(255,255,255,0.3);border-radius:50%;"></div>',
       iconSize: [7, 7], iconAnchor: [3.5, 3.5]
     });
-    L.marker([lat, lon], {icon}).addTo(mapLayer).bindPopup("<b>" + de + "</b><br>" + freq + " kHz<br>" + band);
+    L.marker([lat, lon], {icon}).addTo(mapLayer).bindPopup("<b>" + de + "</b>" + (countryRu(de) ? " <span style='color:#888;font-size:12px'>(" + countryRu(de) + ")</span>" : "") + "<br>" + freq + " kHz · " + band + "<br>SNR: " + s[3] + " дБ<br>" + formatTime(s[10]) + " UTC<br>" + formatDate(s[10]));
   });
 
   if (openPopup) {
@@ -458,11 +458,39 @@ function updateMap() {
 function formatTime(epoch) {
   if (!epoch) return "";
   const d = new Date(epoch * 1000);
-  const months = ["янв","фев","мар","апр","май","июн","июл","авг","сен","окт","ноя","дек"];
   const hh = String(d.getUTCHours()).padStart(2, "0");
   const mm = String(d.getUTCMinutes()).padStart(2, "0");
   return hh + ":" + mm;
 }
+
+function formatDate(epoch) {
+  if (!epoch) return "";
+  const d = new Date(epoch * 1000);
+  const months = ["янв","фев","мар","апр","май","июн","июл","авг","сен","окт","ноя","дек"];
+  return d.getUTCDate() + " " + months[d.getUTCMonth()] + " " + d.getUTCFullYear();
+}
+
+function countryRu(callsign) {
+  if (!callsign) return "";
+  const up = callsign.toUpperCase();
+  const letters = up.replace(/[^A-Z]/g, "");
+  const pfx = letters.length >= 2 ? letters.slice(0, 2) : up.replace(/[^A-Z0-9]/g, "").slice(0, 2);
+  let iso = PREFIX_TO_ISO[pfx];
+  if (!iso && pfx.length === 2) iso = PREFIX_TO_ISO[pfx[0]];
+  return ISO_TO_RU[iso] || "";
+}
+
+const ISO_TO_RU = {
+  "ru":"Россия","ua":"Украина","by":"Беларусь","kz":"Казахстан","uz":"Узбекистан","kg":"Кыргызстан","tj":"Таджикистан","tm":"Туркменистан","az":"Азербайджан","am":"Армения","ge":"Грузия","md":"Молдова","lv":"Латвия","lt":"Литва","ee":"Эстония",
+  "us":"США","gb":"Великобритания","de":"Германия","fr":"Франция","it":"Италия","es":"Испания","pt":"Португалия","nl":"Нидерланды","be":"Бельгия","ch":"Швейцария","at":"Австрия","pl":"Польша","cz":"Чехия","sk":"Словакия","hu":"Венгрия","ro":"Румыния","bg":"Болгария","hr":"Хорватия","rs":"Сербия","si":"Словения","ba":"Босния","me":"Черногория","mk":"Македония","al":"Албания","gr":"Греция","cy":"Кипр",
+  "se":"Швеция","no":"Норвегия","fi":"Финляндия","dk":"Дания","is":"Исландия","ie":"Ирландия","lu":"Люксембург","mt":"Мальта","li":"Лихтенштейн",
+  "cn":"Китай","jp":"Япония","kr":"Южная Корея","in":"Индия","th":"Таиланд","vn":"Вьетнам","id":"Индонезия","my":"Малайзия","ph":"Филиппины","sg":"Сингапур","tw":"Тайвань","hk":"Гонконг","la":"Лаос","mm":"Мьянма","kh":"Камбоджа","bd":"Бангладеш","np":"Непал","pk":"Пакистан","lk":"Шри-Ланка",
+  "br":"Бразилия","ar":"Аргентина","cl":"Чили","co":"Колумбия","mx":"Мексика","ve":"Венесуэла","pe":"Перу","ec":"Эквадор","bo":"Боливия","py":"Парагвай","uy":"Уругвай","gy":"Гайана","sr":"Суринам","cw":"Кюрасао","aw":"Аруба",
+  "au":"Австралия","nz":"Новая Зеландия","za":"ЮАР","eg":"Египет","ng":"Нигерия","ke":"Кения","tz":"Танзания","ma":"Марокко","tn":"Тунис","dz":"Алжир","et":"Эфиопия","gh":"Гана","cm":"Камерун","ci":"Кот-д\'Ивуар","sn":"Сенегал","ml":"Мали","bf":"Буркина-Фасо","ne":"Нигер","td":"Чад","rw":"Руанда","ug":"Уганда","zm":"Замбия","zw":"Зимбабве","bw":"Ботсвана","mz":"Мозамбик","mg":"Мадагаскар","mu":"Маврикий","sc":"Сейшелы","tz":"Танзania",
+  "ca":"Канада","il":"Израиль","tr":"Турция","sa":"Саудовская Аравия","ae":"ОАЭ","ir":"Иран","iq":"Ирак","lb":"Ливан","jo":"Иордания","sy":"Сирия","kw":"Кувейт","qa":"Катар","bh":"Бахрейн","om":"Оман","ye":"Йемen",
+  "py":"Парагвай","cr":"Коста-Рика","pa":"Панама","ni":"Никарагуа","hn":"Гондурас","sv":"Сальвадор","gt":"Гватемала","bz":"Белиз","cu":"Куба","jm":"Ямайка","tt":"Тринидад и Тобаго","bb":"Барбадос","bs":"Багамы","dm":"Доминика","lc":"Сент-Люс","vc":"Сент-Винсент","gd":"Гренада","ag":"Антигуа и Барбуда","kn":"Сент-Китс","do":"Доминикана","ht":"Гаити",
+  "ee":"Эстония","fo":"Фареры","gi":"Гибралтар","gi":"Гибралтар","ad":"Андорра","mc":"Монако","sm":"Сан-Марино","va":"Ватикан","ba":"Босния"
+};
 
 document.querySelectorAll("th.sortable").forEach(th => {
   th.addEventListener("click", () => {
