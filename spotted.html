@@ -110,7 +110,7 @@ tr.spot-new td{animation:spot-highlight 4s ease-out}
       </span>
     </label>
     <p>
-      Споты за <select class="time-select" id="time-range"><option value="3600">час</option><option value="21600">6 часов</option><option value="43200">12 часов</option><option value="86400">24 часа</option></select>. Обновление раз в 5 сек<br>
+      Споты за <select class="time-select" id="time-range"><option value="3600">час</option><option value="21600">6 часов</option><option value="43200">12 часов</option><option value="86400">24 часа</option><option value="604800">неделя</option></select>. Обновление раз в 5 сек<br>
       SNR: <span style="color:#4caf50">≥20 дБ</span> · <span style="color:#eab308">≥10 дБ</span> · <span style="color:#f97316">≥0 дБ</span>
     </p>
   </div>
@@ -156,6 +156,7 @@ const REFRESH_MS = 5000;
 
 let polling = false;
 let timer = null;
+let lastId = 0;
 let spots = {};
 let callInfo = {};
 let maxAgeSec = 3600;
@@ -484,6 +485,7 @@ function startSearch() {
   if (!cs) return;
   $("callsign").value = cs;
   localStorage.setItem("rbn-callsign", cs);
+  lastId = 0;
   spots = {};
   callInfo = {};
   disabledBands = new Set();
@@ -504,7 +506,7 @@ async function fetchSpots() {
   if (!polling) return;
   const cs = $("callsign").value.trim().toUpperCase();
   if (!cs) return;
-  const url = API + "?h=" + HASH + "&cdx=" + encodeURIComponent(cs) + "&r=" + maxRows + "&s=0&ma=" + maxAgeSec;
+  const url = API + "?h=" + HASH + "&cdx=" + encodeURIComponent(cs) + "&r=" + maxRows + "&s=" + lastId + "&ma=" + maxAgeSec;
 
   try {
     const resp = await fetch(url);
@@ -522,6 +524,10 @@ async function fetchSpots() {
     if (data.spots) {
       const ids = Object.keys(data.spots);
       ids.forEach(id => { spots[id] = data.spots[id]; });
+      if (ids.length > 0) {
+        const maxId = Math.max(...ids.map(Number));
+        if (maxId > lastId) lastId = maxId;
+      }
     }
 
     renderSpots();
@@ -623,7 +629,7 @@ $("theme-switch").addEventListener("change", (e) => {
 
 $("time-range").addEventListener("change", (e) => {
   maxAgeSec = Number(e.target.value);
-  if (polling) { spots = {}; fetchSpots(); }
+  if (polling) { lastId = 0; spots = {}; fetchSpots(); }
 });
 
 applyTheme(currentTheme);
