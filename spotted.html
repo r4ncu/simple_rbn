@@ -151,7 +151,8 @@ tr.spot-new td{animation:spot-highlight 4s ease-out}
 
 <script>
 const API = "/api/spots";
-const HASH = "7fb810";
+const HASH_URL = "/api/hash";
+let HASH = "";
 const REFRESH_MS = 5000;
 
 let polling = false;
@@ -530,8 +531,19 @@ function stopSearch() {
   clearInterval(timer);
 }
 
+async function fetchHash() {
+  try {
+    const r = await fetch(HASH_URL);
+    if (r.ok) {
+      const d = await r.json();
+      if (d.hash) HASH = d.hash;
+    }
+  } catch (e) {}
+}
+
 async function fetchSpots() {
   if (!polling) return;
+  if (!HASH) await fetchHash();
   const cs = $("callsign").value.trim().toUpperCase();
   if (!cs) return;
   const url = API + "?h=" + HASH + "&cdx=" + encodeURIComponent(cs) + "&r=" + maxRows + "&s=" + lastId + "&ma=" + maxAgeSec;
@@ -665,10 +677,12 @@ $("time-range").addEventListener("change", (e) => {
 applyTheme(currentTheme);
 
 const savedCallsign = localStorage.getItem("rbn-callsign");
-if (savedCallsign) {
-  $("callsign").value = savedCallsign;
-  setTimeout(() => startSearch(), 200);
-}
+fetchHash().then(() => {
+  if (savedCallsign) {
+    $("callsign").value = savedCallsign;
+    setTimeout(() => startSearch(), 200);
+  }
+});
 
 setTimeout(() => initMap(), 100);
 </script>
