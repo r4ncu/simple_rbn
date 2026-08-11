@@ -2,7 +2,7 @@
 
 **Simple RBN Monitor** — минималистичный веб-монитор для Reverse Beacon Network (RBN)
 
-https://simple-rbn.onrender.com
+https://rbn.r4ncu.ru
 
 
 <img width="585" height="1266" alt="IMG_1329" src="https://github.com/user-attachments/assets/792f0ee9-22fc-498e-8ffd-b8f4a78a7521" />
